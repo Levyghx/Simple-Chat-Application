@@ -1,1 +1,3 @@
-# too lazy to write a readme yet
+# Simple Chat Application made with Python.
+This is a LAN chat application made with Python, and its built-in modules (socket, threading).
+- Because of multithreading, you can send and receive messages at the same time.
