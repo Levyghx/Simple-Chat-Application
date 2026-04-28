@@ -3,19 +3,19 @@ import threading
 
 """
 STÁTUSZ KÓDOK:
-0 - ENGEDÉLYADÁS AZ ÜZENETKÜLDÉSRE
 1 - ÜZENETFOGADÁS / MEGJELENÍTÉS
 2 - ÜZENETKÜLDÉS
 
 EGYÉB JELZÉSEK:
 / - Elválasztó
 """
+# Kliens socket létrehozása
 
-# Üzenetküldés függvény
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-def sendMessage(client):
-    msg = input("Üzenet: ")
-    client.send(f"2/{name}/{msg}".encode())
+# Név megadása
+name = input("\nKérem adjon meg egy felhasználónevet: ")
+print("\n Kapcsolódás a szerverhez...\n")
 
 # Üzenetmegjelenítés függvény
 
@@ -24,32 +24,35 @@ def showMessage(data):
     message = data[2]
     print(f"{usrname}: {message}")
 
-# Név megadása
+# Új üzenet listener függvény
 
-name = input("\nKérem adjon meg egy felhasználónevet: ")
-print("\n Kapcsolódás a szerverhez...\n")
+def listenForMessage():
+    while True:
+        received_data = client.recv(1024).decode()
+        received_data = received_data.split("/")
+        if received_data[0] == "1" and received_data[1] != name:
+            showMessage(received_data)
 
-# Kliens socket létrehozása, csatlakozás a szerverhez
+# Input listener függvény
 
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def listenForInput():
+    while True:
+        msg = input("")
+        client.send(f"2/{name}/{msg}".encode())
+
+# csatlakozás a szerverhez, szálak definiálása
 
 try:
     client.connect(("127.0.0.1", 9999))
     client.send(name.encode())
 except:
     print("Nem sikerült kapcsolódni a szerverhez.\n")
+    quit()
+
+t_message_listener = threading.Thread(target=listenForMessage, args=())
+t_input_listener = threading.Thread(target=listenForInput, args=())
 
 print("Sikeres csatlakozás a Chat-hez.\n")
-print("Várakozás a többi felhasználó csatlakozására...\n")
 
-# Kliensoldali chat logika
-
-while True:
-    received_data = client.recv(1024).decode()
-    received_data = received_data.split("/")
-
-    if received_data[0] == "0":
-        if received_data[1] == name:
-            sendMessage(client)
-    elif received_data[0] == "1":
-        showMessage(received_data)
+t_message_listener.start()
+t_input_listener.start()
