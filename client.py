@@ -9,13 +9,6 @@ STÁTUSZ KÓDOK:
 EGYÉB JELZÉSEK:
 / - Elválasztó
 """
-# Kliens socket létrehozása
-
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Név megadása
-name = input("\nKérem adjon meg egy felhasználónevet: ")
-print("\n Kapcsolódás a szerverhez...\n")
 
 # Üzenetmegjelenítés függvény
 
@@ -26,7 +19,7 @@ def showMessage(data):
 
 # Új üzenet listener függvény
 
-def listenForMessage():
+def listenForMessage(client):
     while True:
         received_data = client.recv(1024).decode()
         received_data = received_data.split("/")
@@ -35,10 +28,18 @@ def listenForMessage():
 
 # Input listener függvény
 
-def listenForInput():
+def listenForInput(client):
     while True:
         msg = input("")
         client.send(f"2/{name}/{msg}".encode())
+
+# Kliens socket létrehozása
+
+client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Név megadása
+name = input("\nKérem adjon meg egy felhasználónevet: ")
+print("\n Kapcsolódás a szerverhez...\n")
 
 # csatlakozás a szerverhez, szálak definiálása
 
@@ -49,8 +50,8 @@ except:
     print("Nem sikerült kapcsolódni a szerverhez.\n")
     quit()
 
-t_message_listener = threading.Thread(target=listenForMessage, args=())
-t_input_listener = threading.Thread(target=listenForInput, args=())
+t_message_listener = threading.Thread(target=listenForMessage, args=(client,))
+t_input_listener = threading.Thread(target=listenForInput, args=(client,))
 
 print("Sikeres csatlakozás a Chat-hez.\n")
 

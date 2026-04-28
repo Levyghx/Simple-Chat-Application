@@ -1,5 +1,4 @@
 import socket
-import random
 import threading
 
 """
@@ -11,17 +10,11 @@ EGYÉB JELZÉSEK:
 / - Elválasztó
 """
 connected_clients = 0
-clients = []
-listening_clients = []
-users = []
-
-# Szerver socket létrehozása
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+users = {}
 
 # Új kapcsolatok kezelése függvény
 
-def handleNewConnection():
+def handleNewConnection(server):
     while True:
         # A kapcsolatok fogadása, nyilvántartása
 
@@ -30,16 +23,16 @@ def handleNewConnection():
         usrname = client.recv(1024).decode()
 
         print(f"Új kliens csatlakozott: {usrname}, {client}")
-        clients.append(client)
-        users.append(usrname)
+        users[usrname] = client
         t_input_listener = threading.Thread(target=listenForMessage, args=(client,))
         t_input_listener.start()
 
 # Küldő függvény (Replikáció)
 
-def sender(forwardable_data):
-    for client in clients:
-        client.send(forwardable_data.encode())
+def sender(forwardable_data, senderUser):
+    for user in users:
+        if user != senderUser:
+            users[user].send(forwardable_data.encode())
 
 # Új üzenet listener függvény
 
@@ -48,19 +41,20 @@ def listenForMessage(client):
         data = client.recv(1024).decode()
         if data:
             data = data.split("/")
+            senderUser = data[1]
             if data[0] == "2":
                 data[0] = "1"
                 forwardable_data = "/".join(data)
-                sender(forwardable_data)
+                sender(forwardable_data, senderUser)
             else:
                 pass
                     
-# bindelés, és listenelés kapcsolatokért
+# Szerver socket létrehozása, bindelés, és listenelés kapcsolatokért
 
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server.bind(("127.0.0.1", 9999))
-
 server.listen()
 
-t_connection_listener = threading.Thread(target=handleNewConnection, args=())
+t_connection_listener = threading.Thread(target=handleNewConnection, args=(server,))
 t_connection_listener.start()
