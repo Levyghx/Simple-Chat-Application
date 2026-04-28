@@ -24,6 +24,7 @@ def handleNewConnection(server):
 
         print(f"Új kliens csatlakozott: {usrname}, {client}")
         users[usrname] = client
+        connected_clients += 1
         t_input_listener = threading.Thread(target=listenForMessage, args=(client,))
         t_input_listener.start()
 
