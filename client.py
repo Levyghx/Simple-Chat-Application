@@ -21,17 +21,28 @@ def showMessage(data):
 
 def listenForMessage(client):
     while True:
-        received_data = client.recv(1024).decode()
-        received_data = received_data.split("/")
-        if received_data[0] == "1" and received_data[1] != name:
-            showMessage(received_data)
+        try:
+            received_data = client.recv(1024).decode()
+        except:
+            print("Megszakadt a kapcsolat.")
+            break
+        else:
+            received_data = received_data.split("/")
+            if received_data[0] == "1":
+                showMessage(received_data)
+            else:
+                pass
 
 # Input listener függvény
 
 def listenForInput(client):
     while True:
         msg = input("")
-        client.send(f"2/{name}/{msg}".encode())
+        try:
+            client.send(f"2/{name}/{msg}".encode())
+        except:
+            print("Megszakadt a kapcsolat.")
+            break
 
 # Kliens socket létrehozása
 

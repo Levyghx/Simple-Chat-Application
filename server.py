@@ -24,29 +24,42 @@ def handleNewConnection(server):
 
         print(f"Új kliens csatlakozott: {usrname}, {client}")
         users[usrname] = client
-        connected_clients += 1
-        t_input_listener = threading.Thread(target=listenForMessage, args=(client,))
+        print(users)
+        t_input_listener = threading.Thread(target=listenForMessage, args=(client, usrname,))
         t_input_listener.start()
 
 # Küldő függvény (Replikáció)
 
-def sender(forwardable_data, senderUser):
+def replicateMessage(forwardable_data, senderUser):
     for user in users:
         if user != senderUser:
-            users[user].send(forwardable_data.encode())
+            try:
+                users[user].send(forwardable_data.encode())
+            except:
+                print(f"Nem sikerült elküldeni az üzenetet {user} felhasználónak.")
 
 # Új üzenet listener függvény
 
-def listenForMessage(client):
+def listenForMessage(client, usrname):
     while True:
-        data = client.recv(1024).decode()
-        if data:
+        try:
+            data = client.recv(1024).decode()
+        except:
+            client.close()
+            try:
+                users.pop(usrname)
+            except:
+                print(f"{usrname} nincs az adatlistában!")
+            finally:
+                print(f"{usrname} lecsatlakozott!")
+                break
+        else:
             data = data.split("/")
             senderUser = data[1]
             if data[0] == "2":
                 data[0] = "1"
                 forwardable_data = "/".join(data)
-                sender(forwardable_data, senderUser)
+                replicateMessage(forwardable_data, senderUser)
             else:
                 pass
                     
